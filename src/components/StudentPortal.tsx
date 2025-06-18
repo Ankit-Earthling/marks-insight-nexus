@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, User, Calendar, GraduationCap, Download, Star, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import jsPDF from 'jspdf';
 
 interface Student {
   id: string;
@@ -141,11 +141,90 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
     return { grade: "F", color: "text-red-600", status: "Fail" };
   };
 
-  const handleDownloadMarkscard = () => {
-    toast({
-      title: "Download Started",
-      description: "Your markscard is being generated...",
+  const generatePDF = (student: Student) => {
+    const doc = new jsPDF();
+    const totalMarks = calculateTotal(student.marks);
+    const percentage = parseFloat(calculatePercentage(student.marks));
+    const overallGrade = getOverallGrade(percentage);
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('BMS Institute of Technology and Management', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(16);
+    doc.text('Student Markscard', 105, 30, { align: 'center' });
+    
+    // Student Info
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Student Name: ${student.name}`, 20, 50);
+    doc.text(`USN: ${student.usn}`, 20, 60);
+    doc.text(`Date of Birth: ${student.dob}`, 20, 70);
+    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 140, 50);
+
+    // Table Header
+    doc.setFont(undefined, 'bold');
+    doc.text('Subject Code', 20, 90);
+    doc.text('Subject Name', 60, 90);
+    doc.text('Credits', 130, 90);
+    doc.text('Marks', 150, 90);
+    doc.text('Grade', 170, 90);
+
+    // Draw line under header
+    doc.line(20, 92, 190, 92);
+
+    // Table Content
+    doc.setFont(undefined, 'normal');
+    let yPos = 100;
+    
+    subjects.forEach((subject) => {
+      const marks = student.marks[subject.code as keyof typeof student.marks] || 0;
+      const grade = getGrade(marks);
+      
+      doc.text(subject.code, 20, yPos);
+      doc.text(subject.name, 60, yPos);
+      doc.text(subject.credits.toString(), 130, yPos);
+      doc.text(`${marks}/100`, 150, yPos);
+      doc.text(grade.grade, 170, yPos);
+      
+      yPos += 10;
     });
+
+    // Summary
+    yPos += 10;
+    doc.line(20, yPos, 190, yPos);
+    yPos += 10;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text('SUMMARY', 20, yPos);
+    yPos += 10;
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`Total Marks: ${totalMarks}/500`, 20, yPos);
+    yPos += 8;
+    doc.text(`Percentage: ${percentage}%`, 20, yPos);
+    yPos += 8;
+    doc.text(`Overall Grade: ${overallGrade.grade}`, 20, yPos);
+    yPos += 8;
+    doc.text(`Status: ${overallGrade.status}`, 20, yPos);
+
+    // Footer
+    doc.setFontSize(10);
+    doc.text('This is a computer generated markscard', 105, 280, { align: 'center' });
+
+    // Save the PDF
+    doc.save(`${student.usn}_markscard.pdf`);
+  };
+
+  const handleDownloadMarkscard = () => {
+    if (loggedInStudent) {
+      generatePDF(loggedInStudent);
+      toast({
+        title: "Download Complete",
+        description: "Your markscard has been downloaded successfully!",
+      });
+    }
   };
 
   const handleLogout = () => {
