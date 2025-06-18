@@ -6,17 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, User, Calendar, GraduationCap, Download, Star, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Student {
+  id: string;
   usn: string;
   name: string;
   dob: string;
   marks: {
-    DSA: number;
-    ADA: number;
-    DBMS: number;
-    JAVA: number;
-    OS: number;
+    DSA?: number;
+    ADA?: number;
+    DBMS?: number;
+    JAVA?: number;
+    OS?: number;
   };
 }
 
@@ -29,22 +31,6 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
   const [loggedInStudent, setLoggedInStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  // Mock student data - in real app, this would come from database
-  const mockStudents: Student[] = [
-    {
-      usn: "1BM20CS001",
-      name: "John Doe",
-      dob: "2002-05-15",
-      marks: { DSA: 85, ADA: 78, DBMS: 92, JAVA: 88, OS: 81 }
-    },
-    {
-      usn: "1BM20CS002", 
-      name: "Jane Smith",
-      dob: "2002-03-22",
-      marks: { DSA: 90, ADA: 85, DBMS: 89, JAVA: 94, OS: 87 }
-    }
-  ];
 
   const subjects = [
     { code: "DSA", name: "Data Structures & Algorithms", credits: 4 },
@@ -66,31 +52,70 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const student = mockStudents.find(
-        s => s.usn.toLowerCase() === loginData.usn.toLowerCase() && s.dob === loginData.dob
-      );
+    try {
+      // Find student by USN and DOB
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('usn', loginData.usn.toUpperCase())
+        .eq('dob', loginData.dob)
+        .single();
 
-      if (student) {
-        setLoggedInStudent(student);
-        toast({
-          title: "Login Successful",
-          description: `Welcome, ${student.name}!`,
-        });
-      } else {
+      if (studentError || !studentData) {
         toast({
           title: "Login Failed",
           description: "Invalid USN or Date of Birth",
           variant: "destructive"
         });
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-    }, 1000);
+
+      // Fetch marks for this student
+      const { data: marksData, error: marksError } = await supabase
+        .from('marks')
+        .select('*')
+        .eq('student_id', studentData.id);
+
+      if (marksError) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch marks data",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Combine student data with marks
+      const marks: any = {};
+      marksData?.forEach(mark => {
+        marks[mark.subject] = mark.marks;
+      });
+
+      const student: Student = {
+        ...studentData,
+        marks
+      };
+
+      setLoggedInStudent(student);
+      toast({
+        title: "Login Successful",
+        description: `Welcome, ${student.name}!`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred during login",
+        variant: "destructive"
+      });
+    }
+
+    setIsLoading(false);
   };
 
   const calculateTotal = (marks: Student['marks']) => {
-    return Object.values(marks).reduce((sum, mark) => sum + mark, 0);
+    return Object.values(marks).reduce((sum, mark) => sum + (mark || 0), 0);
   };
 
   const calculatePercentage = (marks: Student['marks']) => {
@@ -334,14 +359,6 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
               >
                 {isLoading ? "Logging in..." : "View Results"}
               </Button>
-
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800 font-medium mb-2">Demo Credentials:</p>
-                <div className="text-xs text-blue-700 space-y-1">
-                  <div>USN: 1BM20CS001 | DOB: 2002-05-15</div>
-                  <div>USN: 1BM20CS002 | DOB: 2002-03-22</div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>

@@ -1,16 +1,50 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Shield, Users, BookOpen } from "lucide-react";
+import AdminLogin from "@/components/AdminLogin";
 import AdminPanel from "@/components/AdminPanel";
 import StudentPortal from "@/components/StudentPortal";
 
 const Index = () => {
-  const [selectedRole, setSelectedRole] = useState<"admin" | "student" | null>(null);
+  const [selectedRole, setSelectedRole] = useState<"admin" | "student" | "adminLogin" | null>(null);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if admin is already logged in
+    const adminLoggedIn = localStorage.getItem('adminLoggedIn');
+    if (adminLoggedIn === 'true') {
+      setIsAdminLoggedIn(true);
+    }
+  }, []);
+
+  const handleAdminAccess = () => {
+    if (isAdminLoggedIn) {
+      setSelectedRole("admin");
+    } else {
+      setSelectedRole("adminLogin");
+    }
+  };
+
+  const handleAdminLogin = () => {
+    setIsAdminLoggedIn(true);
+    setSelectedRole("admin");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('adminUser');
+    setIsAdminLoggedIn(false);
+    setSelectedRole(null);
+  };
+
+  if (selectedRole === "adminLogin") {
+    return <AdminLogin onBack={() => setSelectedRole(null)} onLogin={handleAdminLogin} />;
+  }
 
   if (selectedRole === "admin") {
-    return <AdminPanel onBack={() => setSelectedRole(null)} />;
+    return <AdminPanel onBack={() => setSelectedRole(null)} onLogout={handleLogout} />;
   }
 
   if (selectedRole === "student") {
@@ -70,10 +104,10 @@ const Index = () => {
                 </li>
               </ul>
               <Button 
-                onClick={() => setSelectedRole("admin")}
+                onClick={handleAdminAccess}
                 className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                Access Admin Panel
+                {isAdminLoggedIn ? "Access Admin Panel" : "Admin Login"}
               </Button>
             </CardContent>
           </Card>
