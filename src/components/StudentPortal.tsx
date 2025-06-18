@@ -118,9 +118,43 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
     return Object.values(marks).reduce((sum, mark) => sum + (mark || 0), 0);
   };
 
-  const calculatePercentage = (marks: Student['marks']) => {
-    const total = calculateTotal(marks);
-    return ((total / 500) * 100).toFixed(2);
+  const calculateGPA = (marks: Student['marks']) => {
+    const totalMarks = calculateTotal(marks);
+    const percentage = (totalMarks / 500) * 100;
+    
+    // Convert percentage to 4.0 GPA scale
+    if (percentage >= 97) return 4.0;
+    if (percentage >= 93) return 3.9;
+    if (percentage >= 90) return 3.8;
+    if (percentage >= 87) return 3.7;
+    if (percentage >= 83) return 3.6;
+    if (percentage >= 80) return 3.5;
+    if (percentage >= 77) return 3.4;
+    if (percentage >= 73) return 3.3;
+    if (percentage >= 70) return 3.2;
+    if (percentage >= 67) return 3.1;
+    if (percentage >= 65) return 3.0;
+    if (percentage >= 62) return 2.9;
+    if (percentage >= 60) return 2.8;
+    if (percentage >= 57) return 2.7;
+    if (percentage >= 55) return 2.6;
+    if (percentage >= 52) return 2.5;
+    if (percentage >= 50) return 2.4;
+    if (percentage >= 47) return 2.3;
+    if (percentage >= 45) return 2.2;
+    if (percentage >= 42) return 2.1;
+    if (percentage >= 40) return 2.0;
+    if (percentage >= 37) return 1.9;
+    if (percentage >= 35) return 1.8;
+    if (percentage >= 32) return 1.7;
+    if (percentage >= 30) return 1.6;
+    if (percentage >= 27) return 1.5;
+    if (percentage >= 25) return 1.4;
+    if (percentage >= 22) return 1.3;
+    if (percentage >= 20) return 1.2;
+    if (percentage >= 17) return 1.1;
+    if (percentage >= 15) return 1.0;
+    return 0.0;
   };
 
   const getGrade = (marks: number) => {
@@ -132,20 +166,20 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
     return { grade: "F", color: "text-red-600" };
   };
 
-  const getOverallGrade = (percentage: number) => {
-    if (percentage >= 90) return { grade: "A+", color: "text-green-600", status: "Distinction" };
-    if (percentage >= 80) return { grade: "A", color: "text-green-500", status: "First Class" };
-    if (percentage >= 70) return { grade: "B+", color: "text-blue-600", status: "Second Class" };
-    if (percentage >= 60) return { grade: "B", color: "text-blue-500", status: "Second Class" };
-    if (percentage >= 50) return { grade: "C", color: "text-yellow-600", status: "Pass" };
+  const getOverallGrade = (gpa: number) => {
+    if (gpa >= 3.8) return { grade: "A+", color: "text-green-600", status: "Distinction" };
+    if (gpa >= 3.5) return { grade: "A", color: "text-green-500", status: "First Class" };
+    if (gpa >= 3.0) return { grade: "B+", color: "text-blue-600", status: "Second Class" };
+    if (gpa >= 2.5) return { grade: "B", color: "text-blue-500", status: "Second Class" };
+    if (gpa >= 2.0) return { grade: "C", color: "text-yellow-600", status: "Pass" };
     return { grade: "F", color: "text-red-600", status: "Fail" };
   };
 
   const generatePDF = (student: Student) => {
     const doc = new jsPDF();
     const totalMarks = calculateTotal(student.marks);
-    const percentage = parseFloat(calculatePercentage(student.marks));
-    const overallGrade = getOverallGrade(percentage);
+    const gpa = calculateGPA(student.marks);
+    const overallGrade = getOverallGrade(gpa);
 
     // Header
     doc.setFontSize(20);
@@ -203,7 +237,7 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
     doc.setFont(undefined, 'normal');
     doc.text(`Total Marks: ${totalMarks}/500`, 20, yPos);
     yPos += 8;
-    doc.text(`Percentage: ${percentage}%`, 20, yPos);
+    doc.text(`GPA: ${gpa.toFixed(2)}/4.0`, 20, yPos);
     yPos += 8;
     doc.text(`Overall Grade: ${overallGrade.grade}`, 20, yPos);
     yPos += 8;
@@ -234,8 +268,8 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
 
   if (loggedInStudent) {
     const totalMarks = calculateTotal(loggedInStudent.marks);
-    const percentage = parseFloat(calculatePercentage(loggedInStudent.marks));
-    const overallGrade = getOverallGrade(percentage);
+    const gpa = calculateGPA(loggedInStudent.marks);
+    const overallGrade = getOverallGrade(gpa);
 
     return (
       <div className="min-h-screen bg-gradient-primary">
@@ -348,8 +382,8 @@ const StudentPortal = ({ onBack }: StudentPortalProps) => {
                       <div className="text-green-100">Total Marks</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold mb-1">{percentage}%</div>
-                      <div className="text-green-100">Percentage</div>
+                      <div className="text-2xl font-bold mb-1">{gpa.toFixed(2)}/4.0</div>
+                      <div className="text-green-100">GPA</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-bold mb-1">{overallGrade.grade}</div>
