@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +23,10 @@ interface Student {
 
 interface AdminPanelProps {
   onBack: () => void;
+  onLogout: () => void;
 }
 
-const AdminPanel = ({ onBack }: AdminPanelProps) => {
+const AdminPanel = ({ onBack, onLogout }: AdminPanelProps) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [formData, setFormData] = useState({
     usn: "",
@@ -88,7 +88,7 @@ const AdminPanel = ({ onBack }: AdminPanelProps) => {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadStudents();
   }, []);
 
@@ -275,22 +275,31 @@ const AdminPanel = ({ onBack }: AdminPanelProps) => {
     <div className="min-h-screen bg-gradient-primary">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center mb-8 animate-fade-in">
-          <Button
-            onClick={onBack}
-            variant="ghost"
-            className="text-white hover:bg-white/20 mr-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Portal
-          </Button>
+        <div className="flex items-center justify-between mb-8 animate-fade-in">
           <div className="flex items-center">
-            <Users className="h-8 w-8 text-white mr-3" />
-            <div>
-              <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
-              <p className="text-blue-100">Manage student records and marks</p>
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              className="text-white hover:bg-white/20 mr-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Portal
+            </Button>
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-white mr-3" />
+              <div>
+                <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
+                <p className="text-blue-100">Manage student records and marks</p>
+              </div>
             </div>
           </div>
+          <Button
+            onClick={onLogout}
+            variant="ghost"
+            className="text-white hover:bg-white/20"
+          >
+            Logout
+          </Button>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
